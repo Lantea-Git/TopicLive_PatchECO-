@@ -9,7 +9,7 @@
 // @run-at        document-end
 // @require       https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js
 // @icon          https://image.noelshack.com/fichiers/2025/35/4/1756403430-image.png
-// @version       8.2
+// @version       8.3
 // @grant         GM_xmlhttpRequest
 // @connect       raw.githubusercontent.com
 // @connect       tiktok.com
@@ -125,7 +125,15 @@ if (nb_messages > 100) {
         }
         let messages_a_afficher = [];
         const nvMsgs = this.obtenirMessages();
-        const isOnLastPage = $('.pagi-suivant-inactif').length > 0;
+
+        const currentPage = parseInt($('.page-active').text(), 10);
+        let isOnLastPage = $('.pagi-suivant-inactif').length > 0;
+
+        // anti faux-supprimés : on ne considère "dernière page" que si la page n'a pas reculé
+        if (TL._lastPage !== undefined && currentPage !== TL._lastPage) {
+            isOnLastPage = false;
+        }
+        TL._lastPage = currentPage;
 
 
         // --- NOUVELLE LOGIQUE : DÉTECTION ET CORRECTION DES MESSAGES SUPPRIMÉS ---
@@ -187,6 +195,9 @@ if (nb_messages > 100) {
                     }
                 }
                 if (nv && isOnLastPage) {
+                    // anti-duplication: evite la réhydratation des pages
+                    if (TL.messages.some(m => m.id_message === nvMsg.id_message)) continue;
+
                     TL.messages.push(nvMsg);
                     TL.nvxMessages++;
                     nvMsg.$message.hide();
